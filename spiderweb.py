@@ -64,6 +64,8 @@ def create_tables(data_store):
         for i, item in enumerate(sorted(items)):
             table.add_row(str(i + 1), item)
         tables.append(Panel(table, title=f"[bold red]{section}"))
+    if not tables:
+        tables.append(Panel(Text("Waiting for results...", style="dim"), title="SpiderWeb"))
     return tables
 
 def tail_file(filepath, data_store):
@@ -77,10 +79,18 @@ def tail_file(filepath, data_store):
             parse_line(line, data_store)
             yield create_tables(data_store)
 
+def find_spiderfoot():
+    paths = ["./sfcli.py", "/usr/local/bin/sfcli.py", "/opt/spiderfoot/sfcli.py"]
+    for path in paths:
+        if os.path.isfile(path):
+            return path
+    return "sfcli.py"  # fallback if it's in PATH
+
 def launch_spiderfoot(target, output_file):
+    sf_path = find_spiderfoot()
     return subprocess.Popen([
-        "sfcli.py", "-s", "all", "-t", target
-    ], stdout=open(output_file, "w"), stderr=subprocess.DEVNULL)
+        "python3", sf_path, "-s", "all", "-t", target
+    ], stdout=open(output_file, "w", buffering=1), stderr=subprocess.STDOUT)
 
 def open_new_terminal(script_path, logfile):
     terminal_cmds = [
@@ -110,14 +120,14 @@ def main():
         with Live(console=console, screen=True, refresh_per_second=3) as live:
             for tables in tail_file(args.watch, data_store):
                 layout = Layout()
-                layout.split_column(*[Layout(t, size=len(t.renderable.rows)+3) for t in tables])
+                layout.split_column(*[Layout(t) for t in tables])
                 live.update(layout)
     elif args.target:
         with tempfile.NamedTemporaryFile(delete=False, mode="w") as tmpfile:
             logfile = tmpfile.name
         script_path = os.path.realpath(__file__)
-        launch_spiderfoot(args.target, logfile)
-        time.sleep(1)  # Let SpiderFoot warm up
+        proc = launch_spiderfoot(args.target, logfile)
+        time.sleep(2)
         open_new_terminal(script_path, logfile)
     else:
         console.print("[bold red]Usage:[/] spiderweb.py --target <domain/ip>")
