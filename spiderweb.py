@@ -28,11 +28,7 @@ KOKO_QUOTES = [
 
 def flashy_banner():
     art = r"""
-     ██████  ██████  ██ ██████  ███████ ██████  ██    ██ ███████ ██████  
-    ██      ██    ██ ██ ██   ██ ██      ██   ██ ██    ██ ██      ██   ██ 
-    ██      ██    ██ ██ ██████  █████   ██████  ██    ██ █████   ██   ██ 
-    ██      ██    ██ ██ ██   ██ ██      ██   ██ ██    ██ ██      ██   ██ 
-     ██████  ██████  ██ ██   ██ ███████ ██   ██  ██████  ███████ ██████  
+
     """
     quote = Text(f"\nKoko says: \"{KOKO_QUOTES[int(time.time()) % len(KOKO_QUOTES)]}\"", style="bold magenta")
     console.print(Text(art, style="bold red"))
